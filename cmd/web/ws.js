@@ -119,7 +119,7 @@
         decoder.decode(chunk);
     }
 
-    // 处理切出的 NAL：按 AUD 分帧
+    // 处理切出的 NAL：按 AUD 或切片分帧
     function onNAL(units) {
         for (const u of units) {
             if (u.type === 9) { // AUD：一帧结束
@@ -129,6 +129,10 @@
                 }
                 stat.aud++; // 新 AU 开始（AUD 自身留在开头也行）
                 curAU.push(u);
+            } else if ((u.type === 1 || u.type === 5) &&
+                curAU.some(x => x.type === 1 || x.type === 5)) { // 切片且已有切片：开始新帧
+                stat.au++; feedAU(curAU);
+                curAU = [u];
             } else {
                 curAU.push(u);
             }

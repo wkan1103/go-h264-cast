@@ -51,7 +51,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("启动 screenrecord 失败：%v", err)
 		}
-		defer func() { _ = cmd.Process.Kill() }()
 
 		buf := make([]byte, 64*1024)
 		for {
@@ -63,11 +62,12 @@ func main() {
 				if err != io.EOF {
 					log.Printf("读取错误：%v", err)
 				}
-				return
+				break
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
+
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
 	}
 }
-
-// go build -o bin\cmd_ws.exe .\cmd\main.go
