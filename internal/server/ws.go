@@ -12,6 +12,7 @@ import (
 
 type Hub struct {
 	mu       sync.Mutex
+	cmu      sync.RWMutex
 	clients  map[*websocket.Conn]struct{}
 	pending  []byte   // 跨调用缓冲，解决 WS 分包/粘包
 	gopCache [][]byte // 最近一组：SPS、PPS、IDR（均为 Annex-B，含起始码）
@@ -27,6 +28,13 @@ func NewHub() *Hub {
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
+}
+
+func (h *Hub) Clients() int {
+	h.cmu.RLock()
+	n := len(h.clients)
+	h.cmu.RUnlock()
+	return n
 }
 
 // 与 main.go 匹配：启动静态页 + 注册 WS

@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"io"
-	"log"
 	"os/exec"
 	"strings"
 	"time"
@@ -42,29 +40,31 @@ func DeviceList(ctx context.Context) ([]string, error) {
 	return ids, nil
 }
 
-func StartScreenStream(ctx context.Context) (io.ReadCloser, *exec.Cmd, error) {
-	cmd := exec.CommandContext(ctx,
-		"adb", "exec-out",
-		"screenrecord",
-		"--size", "1280x720",
-		"--bit-rate", "4000000",
-		"--output-format=h264",
-		"-",
-	)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, nil, err
-	}
-	stderr, _ := cmd.StderrPipe()
-	if err = cmd.Start(); err != nil {
-		return nil, nil, err
-	}
-	// 打印 screenrecord 的错误信息
-	go func() {
-		sc := bufio.NewScanner(stderr)
-		for sc.Scan() {
-			log.Printf("[screenrecord] %s", sc.Text())
-		}
-	}()
-	return stdout, cmd, nil
-}
+// func StartScreenStream(ctx context.Context) (io.ReadCloser, *exec.Cmd, error) {
+// 	cmd := exec.CommandContext(ctx,
+// 		"adb", "exec-out",
+// 		"screenrecord",
+// 		// "--size", "720x1280",
+// 		"--size", "1280x720",
+// 		// "--bit-rate", "2000000 ",
+// 		"--bit-rate", "4000000 ",
+// 		"--output-format=h264",
+// 		"-",
+// 	)
+// 	stdout, err := cmd.StdoutPipe()
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	stderr, _ := cmd.StderrPipe()
+// 	if err = cmd.Start(); err != nil {
+// 		return nil, nil, err
+// 	}
+// 	// 打印 screenrecord 的错误信息
+// 	go func() {
+// 		sc := bufio.NewScanner(stderr)
+// 		for sc.Scan() {
+// 			log.Printf("[screenrecord] %s", sc.Text())
+// 		}
+// 	}()
+// 	return stdout, cmd, nil
+// }

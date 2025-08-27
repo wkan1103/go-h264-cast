@@ -45,29 +45,58 @@ func main() {
 	}()
 	log.Printf("打开: http://localhost%s", types.DefaultHTTPAddr)
 
-	// 3) 拉取 H264 裸流并广播
+	// 3) 拉取 H264 裸流并广播（带 watchdog）
 	for {
 		stdout, cmd, err := adb.StartScreenStream(ctx)
 		if err != nil {
-			log.Fatalf("启动 screenrecord 失败：%v", err)
+			log.Printf("启动 screenrecord 失败：%v，1 秒后重试", err)
+			time.Sleep(time.Second)
+			continue
 		}
+		log.Printf("screenrecord 已启动（pid=%d）", cmd.Process.Pid)
+
+		var sent int64
+		last := time.Now()
+		tick := time.NewTicker(time.Second)
+		defer tick.Stop()
 
 		buf := make([]byte, 64*1024)
+
+	readLoop:
 		for {
-			n, err := stdout.Read(buf)
+			// 非阻塞统计与超时重启
+			select {
+			case <-tick.C:
+				kb := sent / 1024
+				log.Printf("TX=%d KB/s", kb)
+				sent = 0
+				if time.Since(last) > 2*time.Second {
+					log.Printf("2 秒无数据，重启 screenrecord")
+					break readLoop
+				}
+			default:
+			}
+
+			n, rerr := stdout.Read(buf)
 			if n > 0 {
 				hub.Broadcast(buf[:n])
+				sent += int64(n)
+				last = time.Now()
 			}
-			if err != nil {
-				if err != io.EOF {
-					log.Printf("读取错误：%v", err)
+			if rerr != nil {
+				if rerr != io.EOF {
+					log.Printf("读取错误：%v（即将重启）", rerr)
 				}
 				break
 			}
-			time.Sleep(10 * time.Millisecond)
+			// 无 Sleep，尽快转发
 		}
 
+		// 清理并重启
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
 	}
+
 }
+
+// go build -o bin\cmd_ws.exe .\cmd\main.go

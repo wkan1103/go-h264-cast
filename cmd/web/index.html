@@ -1,60 +1,25 @@
 <!doctype html>
 <html>
-
 <head>
   <meta charset="utf-8" />
   <title>Go H264 Cast</title>
   <style>
-    html,
-    body {
-      margin: 0;
-      height: 100%;
-      background: #111;
-      color: #ddd;
-      font-family: system-ui
-    }
-
-    #wrap {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    #bar {
-      padding: 8px 12px;
-      background: #1c1c1c;
-      display: flex;
-      gap: 12px;
-      align-items: center
-    }
-
-    #log {
-      font-size: 12px;
-      opacity: .8
-    }
-
-    canvas {
-      flex: 1;
-      display: block;
-      image-rendering: crisp-edges;
-      background: #000
-    }
-
-    button {
-      padding: 6px 10px
-    }
+    html,body{margin:0;height:100%;background:#111;color:#ddd;font-family:system-ui}
+    #bar{padding:8px 12px;background:#1c1c1c;display:flex;gap:12px;align-items:center}
+    #log{font-size:12px;opacity:.8}
+    video{display:block;width:100%;height:calc(100vh - 44px);background:#000}
+    button{padding:6px 10px}
   </style>
+  <!-- 一定要引入 JMuxer -->
+  <script src="https://unpkg.com/jmuxer/dist/jmuxer.min.js"></script>
 </head>
-
 <body>
-  <div id="wrap">
-    <div id="bar">
-      <button id="btn">连接</button>
-      <span id="log">idle</span>
-    </div>
-    <canvas id="cv"></canvas>
+  <div id="bar">
+    <button id="btn">连接</button>
+    <span id="log">idle</span>
   </div>
-<script src="./ws.js"></script>
+  <!-- 注意：必须 muted 才能自动播放 -->
+  <video id="player" autoplay muted playsinline style="width:100%;height:calc(100vh - 44px);background:#000"></video>
+  <script src="./ws.js"></script>
 </body>
-
 </html>
