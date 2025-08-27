@@ -67,7 +67,11 @@
                 ctx.drawImage(f, 0, 0, canvas.width, canvas.height);
                 f.close(); stat.dec++; log('decoding…');
             },
-            error: e => log('decoder error: ' + e.message),
+            error: e => {
+                log('decoder error: ' + e.message);
+                try { decoder.close(); } catch { }
+                decoder = null; configured = false; gotKey = false; sps = null; pps = null;
+            },
         });
         decoder.configure({ codec, hardwareAcceleration: 'prefer-hardware', description: desc });
         configured = true; log(`configured ${codec}，等待关键帧…`);
@@ -111,6 +115,7 @@
             timestamp: (frameNo++) * 33333,
             data: out
         });
+        if (!decoder || decoder.state === 'closed') return;
         decoder.decode(chunk);
     }
 
@@ -136,7 +141,12 @@
         ws = new WebSocket(`ws://${location.host}/ws`);
         ws.binaryType = 'arraybuffer';
         ws.onopen = () => log('WS 连接成功，等待流…');
-        ws.onclose = () => log('WS 已关闭');
+        ws.onclose = () => {
+            log('WS 已关闭');
+            if (decoder) { try { decoder.close(); } catch { } }
+            decoder = null; configured = false; gotKey = false; sps = null; pps = null;
+            pending = new Uint8Array(0); curAU = []; frameNo = 0;
+        };
         ws.onerror = () => log('WS 错误');
         ws.onmessage = ev => {
             if (typeof ev.data === 'string') return;
